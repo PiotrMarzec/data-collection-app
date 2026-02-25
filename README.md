@@ -4,17 +4,17 @@ A Quarkus/Java web app with simple SPA frontend that allows valid incoming links
 
 ## User Flow
 
-1. User arrives via link (generated via external app), example: `http://example.com/?dataId=abc123&signature=<signature>`
-2. Backend verifies the signature: `MD5(dataId + secret)`
-3. If invalid -> Error page
-4. If valid → Welcome page is shown
-5. User enters their email → Submit
-6. If the data id does not exist in database a new submission is created (data id, email, date created, user agent, ip address)
-7. If data id exists in the database
-8a. If the submission still has a "new" status the user can update the email address for up to 5 times (we have a full audit log)
-8b. If the submission is "processing" the user can't update the email address
-8c. If the submission is "done" the user is show the link to their results and information about the link expiration date
-8c. If the submission is "expired" the user should be able to create a new submission
+- User arrives via link (generated via external app), example: `http://example.com/?dataId=abc123&signature=<signature>`
+- Backend verifies the signature: `MD5(dataId + secret)`
+- If invalid -> Error page
+- If valid → Welcome page is shown
+- User enters their email → Submit
+- If the data id does not exist in database a new submission is created (data id, email, date created, user agent, ip address)
+- If data id exists in the database
+- If the submission still has a "new" status the user can update the email address for up to 5 times (we have a full audit log)
+- If the submission is "processing" the user can't update the email address
+- If the submission is "done" the user is show the link to their results and information about the link expiration date
+- If the submission is "expired" the user should be able to create a new submission
 
 ## Admin panel
 
