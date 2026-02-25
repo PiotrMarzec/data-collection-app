@@ -210,6 +210,8 @@
         <div class="info-banner" style="margin-top:0;">
             <strong>Email on file:</strong> <span id="locked-email"></span>
         </div>
+        <a id="result-url-btn" href="#" target="_blank" rel="noopener noreferrer"
+           class="btn btn-primary" style="display:none; margin-top:20px;">View Results</a>
     </div>
 
     <!-- Step 3: Success -->
@@ -283,6 +285,13 @@
                     iconEl.className = 'icon icon-processing';
                 }
                 document.getElementById('locked-email').textContent = data.currentEmail || '';
+                const resultBtn = document.getElementById('result-url-btn');
+                if (data.status === 'DONE' && data.resultUrl) {
+                    resultBtn.href = data.resultUrl;
+                    resultBtn.style.display = 'inline-block';
+                } else {
+                    resultBtn.style.display = 'none';
+                }
                 showStep('step-locked');
                 return;
             }

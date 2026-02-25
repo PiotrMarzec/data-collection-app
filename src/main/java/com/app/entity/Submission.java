@@ -37,6 +37,9 @@ public class Submission extends PanacheEntity {
     @Column(nullable = false)
     public String status = "NEW";
 
+    @Column(name = "result_url", columnDefinition = "TEXT")
+    public String resultUrl;
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")
     public List<SubmissionUpdate> updates = new ArrayList<>();

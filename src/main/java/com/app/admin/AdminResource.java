@@ -102,15 +102,20 @@ public class AdminResource {
                     .entity(Map.of("error", "email is required"))
                     .build();
         }
-        if (req.status() != null && !List.of("NEW", "PROCESSING", "DONE").contains(req.status())) {
+        String newStatus = req.status() != null ? req.status() : submission.status;
+        if (!List.of("NEW", "PROCESSING", "DONE").contains(newStatus)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "status must be NEW, PROCESSING, or DONE"))
                     .build();
         }
-        submission.email = req.email().trim();
-        if (req.status() != null) {
-            submission.status = req.status();
+        if ("DONE".equals(newStatus) && (req.resultUrl() == null || req.resultUrl().isBlank())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "resultUrl is required when status is DONE"))
+                    .build();
         }
+        submission.email = req.email().trim();
+        submission.status = newStatus;
+        submission.resultUrl = "DONE".equals(newStatus) ? req.resultUrl().trim() : submission.resultUrl;
         submission.updatedAt = LocalDateTime.now();
         submission.persist();
         return Response.ok(SubmissionDto.from(submission)).build();
@@ -122,7 +127,7 @@ public class AdminResource {
 
     record LoginRequest(String password) {}
     record LoginResponse(String token) {}
-    record EditRequest(String email, String status) {}
+    record EditRequest(String email, String status, String resultUrl) {}
 
     record SubmissionDto(
             Long id,
@@ -131,6 +136,7 @@ public class AdminResource {
             int updateCount,
             String ipAddress,
             String status,
+            String resultUrl,
             LocalDateTime submittedAt,
             LocalDateTime updatedAt,
             LocalDateTime createdAt) {
@@ -138,7 +144,7 @@ public class AdminResource {
         static SubmissionDto from(Submission s) {
             return new SubmissionDto(
                     s.id, s.dataId, s.email, s.updateCount,
-                    s.ipAddress, s.status, s.submittedAt, s.updatedAt, s.createdAt);
+                    s.ipAddress, s.status, s.resultUrl, s.submittedAt, s.updatedAt, s.createdAt);
         }
     }
 

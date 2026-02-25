@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import io.vertx.core.http.HttpServerRequest;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Path("/api")
@@ -52,13 +53,16 @@ public class SubmissionResource {
         Submission existing = Submission.findByDataId(dataId);
 
         if (existing != null && !"NEW".equals(existing.status)) {
-            return Response.ok(Map.of(
-                    "valid", true,
-                    "dataId", dataId,
-                    "locked", true,
-                    "status", existing.status,
-                    "currentEmail", existing.email
-            )).build();
+            var lockedResp = new HashMap<String, Object>();
+            lockedResp.put("valid", true);
+            lockedResp.put("dataId", dataId);
+            lockedResp.put("locked", true);
+            lockedResp.put("status", existing.status);
+            lockedResp.put("currentEmail", existing.email);
+            if (existing.resultUrl != null) {
+                lockedResp.put("resultUrl", existing.resultUrl);
+            }
+            return Response.ok(lockedResp).build();
         }
 
         if (existing != null && existing.updateCount >= MAX_UPDATES) {

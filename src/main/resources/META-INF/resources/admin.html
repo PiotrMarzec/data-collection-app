@@ -287,11 +287,15 @@
     <label for="edit-email-input">Email Address</label>
     <input type="email" id="edit-email-input" placeholder="user@example.com" />
     <label for="edit-status-select" style="margin-top:.9rem;">Status</label>
-    <select id="edit-status-select">
+    <select id="edit-status-select" onchange="onStatusChange()">
       <option value="NEW">NEW</option>
       <option value="PROCESSING">PROCESSING</option>
       <option value="DONE">DONE</option>
     </select>
+    <div id="result-url-field" style="display:none; margin-top:.9rem;">
+      <label for="edit-result-url-input">Result URL <span style="color:#dc2626">*</span></label>
+      <input type="text" id="edit-result-url-input" placeholder="https://…" />
+    </div>
     <div class="error-msg" id="edit-error"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -416,7 +420,7 @@
         <td>${formatDate(row.submittedAt || row.createdAt)}</td>
         <td>
           <div class="actions">
-            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}', '${row.status}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}', '${row.status}', '${esc(row.resultUrl || '')}')">Edit</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleHistory(${row.id}, this)">History</button>
           </div>
         </td>
@@ -493,10 +497,17 @@
   }
 
   // ── Edit modal ─────────────────────────────────────────────────────────
-  function openEdit(id, currentEmail, currentStatus) {
+  function onStatusChange() {
+    const isDone = document.getElementById('edit-status-select').value === 'DONE';
+    document.getElementById('result-url-field').style.display = isDone ? 'block' : 'none';
+  }
+
+  function openEdit(id, currentEmail, currentStatus, currentResultUrl) {
     editingId = id;
     document.getElementById('edit-email-input').value = currentEmail;
     document.getElementById('edit-status-select').value = currentStatus || 'NEW';
+    document.getElementById('edit-result-url-input').value = currentResultUrl || '';
+    document.getElementById('result-url-field').style.display = currentStatus === 'DONE' ? 'block' : 'none';
     document.getElementById('edit-error').textContent = '';
     document.getElementById('edit-modal').classList.add('open');
     setTimeout(() => document.getElementById('edit-email-input').focus(), 50);
@@ -518,9 +529,14 @@
     }
 
     const status = document.getElementById('edit-status-select').value;
+    const resultUrl = document.getElementById('edit-result-url-input').value.trim();
+    if (status === 'DONE' && !resultUrl) {
+      errEl.textContent = 'Result URL is required when status is DONE.';
+      return;
+    }
     const res = await apiFetch(`/admin/submissions/${editingId}`, {
       method: 'PUT',
-      body: JSON.stringify({ email, status })
+      body: JSON.stringify({ email, status, resultUrl: resultUrl || null })
     });
     if (!res) return;
 
