@@ -156,6 +156,22 @@
         .icon-error       { color: #dc2626; }
         .icon-processing  { color: #d97706; }
         .icon-done        { color: #64748b; }
+        .icon-expired     { color: #991b1b; }
+
+        .expiry-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-top: 16px;
+            font-size: 0.82rem;
+            color: #166534;
+        }
+        .expiry-info.expiring-soon {
+            background: #fefce8;
+            border-color: #fde68a;
+            color: #854d0e;
+        }
     </style>
 </head>
 <body>
@@ -210,6 +226,7 @@
         <div class="info-banner" style="margin-top:0;">
             <strong>Email on file:</strong> <span id="locked-email"></span>
         </div>
+        <div id="expiry-info" class="expiry-info" style="display:none;"></div>
         <a id="result-url-btn" href="#" target="_blank" rel="noopener noreferrer"
            class="btn btn-primary" style="display:none; margin-top:20px;">View Results</a>
     </div>
@@ -272,26 +289,49 @@
             }
 
             if (data.locked) {
-                const iconEl = document.getElementById('locked-icon');
-                if (data.status === 'DONE') {
+                const iconEl    = document.getElementById('locked-icon');
+                const expiryEl  = document.getElementById('expiry-info');
+                const resultBtn = document.getElementById('result-url-btn');
+
+                expiryEl.style.display = 'none';
+                resultBtn.style.display = 'none';
+
+                if (data.status === 'EXPIRED') {
+                    document.getElementById('locked-title').textContent = 'Results expired';
+                    document.getElementById('locked-message').textContent = 'The results for this submission have expired and are no longer available.';
+                    iconEl.textContent = '✕';
+                    iconEl.className = 'icon icon-expired';
+                } else if (data.status === 'DONE') {
                     document.getElementById('locked-title').textContent = 'Registration complete';
                     document.getElementById('locked-message').textContent = 'Your registration has been completed. No further changes are needed.';
                     iconEl.textContent = '✓';
                     iconEl.className = 'icon icon-done';
+
+                    if (data.expirationDate) {
+                        const expiry    = new Date(data.expirationDate);
+                        const msLeft    = expiry - Date.now();
+                        const daysLeft  = Math.ceil(msLeft / 86400000);
+                        const dateStr   = expiry.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                        const isExpiringSoon = daysLeft <= 7;
+                        expiryEl.className = 'expiry-info' + (isExpiringSoon ? ' expiring-soon' : '');
+                        expiryEl.textContent = daysLeft > 0
+                            ? `Results available until ${dateStr} — ${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`
+                            : `Results expired on ${dateStr}`;
+                        expiryEl.style.display = 'block';
+                    }
+
+                    if (data.resultUrl) {
+                        resultBtn.href = data.resultUrl;
+                        resultBtn.style.display = 'inline-block';
+                    }
                 } else {
                     document.getElementById('locked-title').textContent = 'Under review';
                     document.getElementById('locked-message').textContent = 'Your submission is currently being processed. No further changes can be made at this time.';
                     iconEl.textContent = '⏳';
                     iconEl.className = 'icon icon-processing';
                 }
+
                 document.getElementById('locked-email').textContent = data.currentEmail || '';
-                const resultBtn = document.getElementById('result-url-btn');
-                if (data.status === 'DONE' && data.resultUrl) {
-                    resultBtn.href = data.resultUrl;
-                    resultBtn.style.display = 'inline-block';
-                } else {
-                    resultBtn.style.display = 'none';
-                }
                 showStep('step-locked');
                 return;
             }

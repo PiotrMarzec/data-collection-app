@@ -160,6 +160,7 @@
     .status-NEW        { background: #dcfce7; color: #166534; }
     .status-PROCESSING { background: #fef9c3; color: #854d0e; }
     .status-DONE       { background: #f1f5f9; color: #475569; }
+    .status-EXPIRED    { background: #fee2e2; color: #991b1b; }
 
     select {
       width: 100%;
@@ -261,6 +262,7 @@
           <th>dataId</th>
           <th>Email</th>
           <th>Status</th>
+          <th>Expires</th>
           <th>Updates</th>
           <th>IP Address</th>
           <th>Submitted</th>
@@ -268,7 +270,7 @@
         </tr>
       </thead>
       <tbody id="table-body">
-        <tr><td colspan="7" class="empty">Loading…</td></tr>
+        <tr><td colspan="8" class="empty">Loading…</td></tr>
       </tbody>
     </table>
 
@@ -291,10 +293,18 @@
       <option value="NEW">NEW</option>
       <option value="PROCESSING">PROCESSING</option>
       <option value="DONE">DONE</option>
+      <option value="EXPIRED">EXPIRED</option>
     </select>
     <div id="result-url-field" style="display:none; margin-top:.9rem;">
       <label for="edit-result-url-input">Result URL <span style="color:#dc2626">*</span></label>
       <input type="text" id="edit-result-url-input" placeholder="https://…" />
+    </div>
+    <div id="expiration-date-field" style="margin-top:.9rem;">
+      <label for="edit-expiration-date">Expiration Date</label>
+      <input type="date" id="edit-expiration-date" />
+      <div style="font-size:.78rem; color:#94a3b8; margin-top:.3rem;">
+        Defaults to 30 days from today when setting status to DONE.
+      </div>
     </div>
     <div class="error-msg" id="edit-error"></div>
     <div class="modal-actions">
@@ -406,7 +416,7 @@
     openHistoryRow = null;
 
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No submissions found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No submissions found.</td></tr>';
       return;
     }
 
@@ -415,12 +425,13 @@
         <td><code>${esc(row.dataId)}</code></td>
         <td>${esc(row.email)}</td>
         <td><span class="status-badge status-${row.status}">${row.status}</span></td>
+        <td>${row.expirationDate ? formatDate(row.expirationDate) : '—'}</td>
         <td><span class="badge">${row.updateCount}</span></td>
         <td>${esc(row.ipAddress || '—')}</td>
         <td>${formatDate(row.submittedAt || row.createdAt)}</td>
         <td>
           <div class="actions">
-            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}', '${row.status}', '${esc(row.resultUrl || '')}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}', '${row.status}', '${esc(row.resultUrl || '')}', ${row.expirationDate ? `'${row.expirationDate}'` : 'null'})">Edit</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleHistory(${row.id}, this)">History</button>
           </div>
         </td>
@@ -461,10 +472,10 @@
     historyRow.className = 'history-row';
 
     if (!history.length) {
-      historyRow.innerHTML = `<td colspan="7"><div class="history-inner" style="color:#94a3b8">No update history.</div></td>`;
+      historyRow.innerHTML = `<td colspan="8"><div class="history-inner" style="color:#94a3b8">No update history.</div></td>`;
     } else {
       historyRow.innerHTML = `
-        <td colspan="7">
+        <td colspan="8">
           <div class="history-inner">
             <table>
               <thead>
@@ -502,11 +513,13 @@
     document.getElementById('result-url-field').style.display = isDone ? 'block' : 'none';
   }
 
-  function openEdit(id, currentEmail, currentStatus, currentResultUrl) {
+  function openEdit(id, currentEmail, currentStatus, currentResultUrl, currentExpirationDate) {
     editingId = id;
     document.getElementById('edit-email-input').value = currentEmail;
     document.getElementById('edit-status-select').value = currentStatus || 'NEW';
     document.getElementById('edit-result-url-input').value = currentResultUrl || '';
+    document.getElementById('edit-expiration-date').value = currentExpirationDate
+        ? new Date(currentExpirationDate).toISOString().slice(0, 10) : '';
     document.getElementById('result-url-field').style.display = currentStatus === 'DONE' ? 'block' : 'none';
     document.getElementById('edit-error').textContent = '';
     document.getElementById('edit-modal').classList.add('open');
@@ -530,13 +543,14 @@
 
     const status = document.getElementById('edit-status-select').value;
     const resultUrl = document.getElementById('edit-result-url-input').value.trim();
+    const expirationDate = document.getElementById('edit-expiration-date').value;
     if (status === 'DONE' && !resultUrl) {
       errEl.textContent = 'Result URL is required when status is DONE.';
       return;
     }
     const res = await apiFetch(`/admin/submissions/${editingId}`, {
       method: 'PUT',
-      body: JSON.stringify({ email, status, resultUrl: resultUrl || null })
+      body: JSON.stringify({ email, status, resultUrl: resultUrl || null, expirationDate: expirationDate || null })
     });
     if (!res) return;
 

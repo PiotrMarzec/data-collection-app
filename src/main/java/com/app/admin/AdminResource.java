@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -103,9 +104,9 @@ public class AdminResource {
                     .build();
         }
         String newStatus = req.status() != null ? req.status() : submission.status;
-        if (!List.of("NEW", "PROCESSING", "DONE").contains(newStatus)) {
+        if (!List.of("NEW", "PROCESSING", "DONE", "EXPIRED").contains(newStatus)) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "status must be NEW, PROCESSING, or DONE"))
+                    .entity(Map.of("error", "status must be NEW, PROCESSING, DONE, or EXPIRED"))
                     .build();
         }
         if ("DONE".equals(newStatus) && (req.resultUrl() == null || req.resultUrl().isBlank())) {
@@ -113,9 +114,23 @@ public class AdminResource {
                     .entity(Map.of("error", "resultUrl is required when status is DONE"))
                     .build();
         }
+
+        boolean transitioningToDone = "DONE".equals(newStatus) && !"DONE".equals(submission.status);
+        LocalDateTime newExpiration = null;
+        if (req.expirationDate() != null && !req.expirationDate().isBlank()) {
+            newExpiration = LocalDate.parse(req.expirationDate()).atStartOfDay();
+        } else if (transitioningToDone) {
+            newExpiration = LocalDateTime.now().plusDays(30);
+        }
+
         submission.email = req.email().trim();
         submission.status = newStatus;
-        submission.resultUrl = "DONE".equals(newStatus) ? req.resultUrl().trim() : submission.resultUrl;
+        if ("DONE".equals(newStatus)) {
+            submission.resultUrl = req.resultUrl().trim();
+        }
+        if (newExpiration != null) {
+            submission.expirationDate = newExpiration;
+        }
         submission.updatedAt = LocalDateTime.now();
         submission.persist();
         return Response.ok(SubmissionDto.from(submission)).build();
@@ -127,7 +142,7 @@ public class AdminResource {
 
     record LoginRequest(String password) {}
     record LoginResponse(String token) {}
-    record EditRequest(String email, String status, String resultUrl) {}
+    record EditRequest(String email, String status, String resultUrl, String expirationDate) {}
 
     record SubmissionDto(
             Long id,
@@ -137,6 +152,7 @@ public class AdminResource {
             String ipAddress,
             String status,
             String resultUrl,
+            LocalDateTime expirationDate,
             LocalDateTime submittedAt,
             LocalDateTime updatedAt,
             LocalDateTime createdAt) {
@@ -144,7 +160,8 @@ public class AdminResource {
         static SubmissionDto from(Submission s) {
             return new SubmissionDto(
                     s.id, s.dataId, s.email, s.updateCount,
-                    s.ipAddress, s.status, s.resultUrl, s.submittedAt, s.updatedAt, s.createdAt);
+                    s.ipAddress, s.status, s.resultUrl, s.expirationDate,
+                    s.submittedAt, s.updatedAt, s.createdAt);
         }
     }
 

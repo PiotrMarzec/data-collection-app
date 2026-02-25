@@ -40,6 +40,9 @@ public class Submission extends PanacheEntity {
     @Column(name = "result_url", columnDefinition = "TEXT")
     public String resultUrl;
 
+    @Column(name = "expiration_date")
+    public LocalDateTime expirationDate;
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")
     public List<SubmissionUpdate> updates = new ArrayList<>();

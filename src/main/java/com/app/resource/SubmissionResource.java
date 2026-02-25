@@ -62,6 +62,9 @@ public class SubmissionResource {
             if (existing.resultUrl != null) {
                 lockedResp.put("resultUrl", existing.resultUrl);
             }
+            if (existing.expirationDate != null) {
+                lockedResp.put("expirationDate", existing.expirationDate);
+            }
             return Response.ok(lockedResp).build();
         }
 
