@@ -187,6 +187,14 @@ public class SubmissionResource {
         submission.submittedAt = LocalDateTime.now();
         submission.persist();
 
+        // Record the initial email in the audit trail
+        SubmissionUpdate initial = new SubmissionUpdate();
+        initial.submission = submission;
+        initial.email = request.email;
+        initial.ipAddress = ipAddress;
+        initial.userAgent = userAgent;
+        initial.persist();
+
         return Response.ok(Map.of(
                 "success", true,
                 "message", "Email registered successfully"
