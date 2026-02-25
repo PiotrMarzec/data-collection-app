@@ -1,0 +1,46 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: dc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: data_collection
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d data_collection"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    container_name: dc-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      QUARKUS_HTTP_PORT: "9666"
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://db:5432/data_collection
+      QUARKUS_DATASOURCE_USERNAME: app_user
+      QUARKUS_DATASOURCE_PASSWORD: app_password
+      APP_SIGNATURE_SECRET: my-super-secret-key   # ⚠️ change in production
+    ports:
+      - "9666:9666"
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
+    driver: bridge
