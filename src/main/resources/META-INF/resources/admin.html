@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Login ── */
+    #login-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .login-card h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #1e293b;
+    }
+
+    label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: .4rem;
+      color: #475569;
+    }
+
+    input[type="password"], input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: .6rem .85rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus { border-color: #4f46e5; }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: .82rem;
+      margin-top: .5rem;
+      min-height: 1.1em;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+
+    .btn-primary { background: #4f46e5; color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-secondary { background: #e2e8f0; color: #1e293b; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-sm { padding: .35rem .8rem; font-size: .8rem; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    #login-btn { width: 100%; margin-top: 1.2rem; }
+
+    /* ── Panel ── */
+    #panel-view { display: none; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar h1 { font-size: 1.1rem; font-weight: 700; }
+
+    .panel-body { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+
+    .toolbar {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: .55rem .9rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: .9rem;
+      outline: none;
+      max-width: 380px;
+    }
+
+    .search-input:focus { border-color: #4f46e5; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      font-size: .875rem;
+    }
+
+    thead { background: #f8fafc; }
+
+    th, td {
+      padding: .7rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    th { font-weight: 600; color: #64748b; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover > td { background: #f8fafc; }
+
+    .badge {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    .actions { display: flex; gap: .4rem; }
+
+    /* ── History row ── */
+    .history-row td { padding: 0; background: #f8fafc !important; }
+
+    .history-inner {
+      padding: .75rem 1rem .75rem 2.5rem;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .history-inner table {
+      box-shadow: none;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      font-size: .82rem;
+    }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .75rem;
+      margin-top: 1rem;
+      font-size: .875rem;
+      color: #64748b;
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.15);
+    }
+
+    .modal h2 { font-size: 1.1rem; margin-bottom: 1.25rem; }
+
+    .modal-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+    .empty { text-align: center; color: #94a3b8; padding: 2rem; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ LOGIN ═══════════════════════════════ -->
+<div id="login-view">
+  <div class="login-card">
+    <h1>Admin Panel</h1>
+    <label for="password-input">Password</label>
+    <input type="password" id="password-input" placeholder="Enter admin password"
+           autocomplete="current-password" />
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PANEL ═══════════════════════════════ -->
+<div id="panel-view">
+  <div class="topbar">
+    <h1>Admin Panel</h1>
+    <button class="btn btn-secondary btn-sm" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="panel-body">
+    <div class="toolbar">
+      <input class="search-input" id="search-input" type="text"
+             placeholder="Search by email or dataId…" oninput="onSearch()" />
+    </div>
+
+    <table id="submissions-table">
+      <thead>
+        <tr>
+          <th>dataId</th>
+          <th>Email</th>
+          <th>Updates</th>
+          <th>IP Address</th>
+          <th>Submitted</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="6" class="empty">Loading…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      <button class="btn btn-secondary btn-sm" id="prev-btn" onclick="changePage(-1)">← Prev</button>
+      <span id="page-info"></span>
+      <button class="btn btn-secondary btn-sm" id="next-btn" onclick="changePage(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ EDIT MODAL ═══════════════════════════ -->
+<div class="modal-backdrop" id="edit-modal">
+  <div class="modal">
+    <h2>Edit Email</h2>
+    <label for="edit-email-input">New Email Address</label>
+    <input type="email" id="edit-email-input" placeholder="user@example.com" />
+    <div class="error-msg" id="edit-error"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PAGE_SIZE = 20;
+
+  let token = null;
+  let currentPage = 0;
+  let totalRecords = 0;
+  let searchTimer = null;
+  let editingId = null;
+  let openHistoryRow = null;
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  (function init() {
+    token = sessionStorage.getItem('admin_token');
+    if (token) showPanel();
+
+    document.getElementById('password-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('edit-email-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveEdit();
+    });
+  })();
+
+  // ── Auth ──────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const password = document.getElementById('password-input').value;
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+
+    try {
+      const res = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+        errEl.textContent = 'Incorrect password.';
+        return;
+      }
+
+      const data = await res.json();
+      token = data.token;
+      sessionStorage.setItem('admin_token', token);
+      showPanel();
+    } catch {
+      errEl.textContent = 'Connection error. Please try again.';
+    }
+  }
+
+  async function doLogout() {
+    if (token) {
+      await fetch('/admin/logout', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).catch(() => {});
+      sessionStorage.removeItem('admin_token');
+      token = null;
+    }
+    document.getElementById('panel-view').style.display = 'none';
+    document.getElementById('login-view').style.display = 'flex';
+    document.getElementById('password-input').value = '';
+  }
+
+  function showPanel() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('panel-view').style.display = 'block';
+    loadSubmissions();
+  }
+
+  // ── Data loading ──────────────────────────────────────────────────────
+  function onSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { currentPage = 0; loadSubmissions(); }, 350);
+  }
+
+  function changePage(delta) {
+    const maxPage = Math.max(0, Math.ceil(totalRecords / PAGE_SIZE) - 1);
+    currentPage = Math.min(maxPage, Math.max(0, currentPage + delta));
+    loadSubmissions();
+  }
+
+  async function loadSubmissions() {
+    const search = document.getElementById('search-input').value.trim();
+    const params = new URLSearchParams({ page: currentPage, size: PAGE_SIZE });
+    if (search) params.set('search', search);
+
+    const res = await apiFetch(`/admin/submissions?${params}`);
+    if (!res) return;
+
+    const { data, total } = await res.json();
+    totalRecords = total;
+    renderTable(data);
+    renderPagination();
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  function renderTable(rows) {
+    const tbody = document.getElementById('table-body');
+    openHistoryRow = null;
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No submissions found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(row => `
+      <tr data-id="${row.id}">
+        <td><code>${esc(row.dataId)}</code></td>
+        <td>${esc(row.email)}</td>
+        <td><span class="badge">${row.updateCount}</span></td>
+        <td>${esc(row.ipAddress || '—')}</td>
+        <td>${formatDate(row.submittedAt || row.createdAt)}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleHistory(${row.id}, this)">History</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderPagination() {
+    const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
+    document.getElementById('page-info').textContent =
+      `Page ${currentPage + 1} of ${totalPages} (${totalRecords} total)`;
+    document.getElementById('prev-btn').disabled = currentPage === 0;
+    document.getElementById('next-btn').disabled = currentPage >= totalPages - 1;
+  }
+
+  // ── History ───────────────────────────────────────────────────────────
+  async function toggleHistory(id, btn) {
+    const tbody = document.getElementById('table-body');
+
+    // Close existing history row
+    if (openHistoryRow) {
+      openHistoryRow.remove();
+      openHistoryRow = null;
+      if (btn.dataset.open === String(id)) {
+        btn.dataset.open = '';
+        return;
+      }
+    }
+    btn.dataset.open = id;
+
+    const res = await apiFetch(`/admin/submissions/${id}/history`);
+    if (!res) return;
+
+    const history = await res.json();
+    const sourceRow = tbody.querySelector(`tr[data-id="${id}"]`);
+
+    const historyRow = document.createElement('tr');
+    historyRow.className = 'history-row';
+
+    if (!history.length) {
+      historyRow.innerHTML = `<td colspan="6"><div class="history-inner" style="color:#94a3b8">No update history.</div></td>`;
+    } else {
+      historyRow.innerHTML = `
+        <td colspan="6">
+          <div class="history-inner">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Email</th>
+                  <th>IP Address</th>
+                  <th>User Agent</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${history.map((h, i) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td>${esc(h.email)}</td>
+                    <td>${esc(h.ipAddress || '—')}</td>
+                    <td title="${esc(h.userAgent || '')}">${truncate(h.userAgent, 40)}</td>
+                    <td>${formatDate(h.createdAt)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </td>`;
+    }
+
+    sourceRow.after(historyRow);
+    openHistoryRow = historyRow;
+  }
+
+  // ── Edit modal ─────────────────────────────────────────────────────────
+  function openEdit(id, currentEmail) {
+    editingId = id;
+    document.getElementById('edit-email-input').value = currentEmail;
+    document.getElementById('edit-error').textContent = '';
+    document.getElementById('edit-modal').classList.add('open');
+    setTimeout(() => document.getElementById('edit-email-input').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editingId = null;
+  }
+
+  async function saveEdit() {
+    const email = document.getElementById('edit-email-input').value.trim();
+    const errEl = document.getElementById('edit-error');
+    errEl.textContent = '';
+
+    if (!email || !email.includes('@')) {
+      errEl.textContent = 'Please enter a valid email address.';
+      return;
+    }
+
+    const res = await apiFetch(`/admin/submissions/${editingId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ email })
+    });
+    if (!res) return;
+
+    if (!res.ok) {
+      errEl.textContent = 'Failed to save. Please try again.';
+      return;
+    }
+
+    closeModal();
+    loadSubmissions();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  async function apiFetch(url, opts = {}) {
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+        ...(opts.headers || {})
+      }
+    });
+
+    if (res.status === 401) {
+      sessionStorage.removeItem('admin_token');
+      token = null;
+      document.getElementById('panel-view').style.display = 'none';
+      document.getElementById('login-view').style.display = 'flex';
+      document.getElementById('login-error').textContent = 'Session expired. Please sign in again.';
+      return null;
+    }
+
+    return res;
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function truncate(str, max) {
+    if (!str) return '—';
+    return str.length > max ? str.slice(0, max) + '…' : str;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+</script>
+</body>
+</html>
