@@ -34,6 +34,7 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: app_password
       APP_SIGNATURE_SECRET: my-super-secret-key   # ⚠️ change in production
       APP_ADMIN_PASSWORD: "changeme"              # ⚠️ change in production
+      APP_API_TOKEN: "changeme-api-token"         # ⚠️ change in production
     ports:
       - "9666:9666"
     networks:
