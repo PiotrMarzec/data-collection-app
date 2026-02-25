@@ -1,53 +1,32 @@
 # Data Collection App
 
-A Quarkus/Java web app that validates incoming links (via MD5 signature) and collects email addresses.
+A Quarkus/Java web app with simple SPA frontend that allows valid incoming links and collects user email addresses.
 
-## Flow
+## User Flow
 
-1. User arrives via link: `http://localhost:8080/?dataId=abc123&signature=<md5hash>`
+1. User arrives via link (generated via external app), example: `http://example.com/?dataId=abc123&signature=<signature>`
 2. Backend verifies the signature: `MD5(dataId + secret)`
-3. If valid → Welcome page is shown
-4. User enters their email → Submit
-5. Backend saves `(dataId, email)` to PostgreSQL
-6. If the link is invalid or already used → Error page
+3. If invalid -> Error page
+4. If valid → Welcome page is shown
+5. User enters their email → Submit
+6. If the data id does not exist in database a new submission is created (data id, email, date created, user agent, ip address)
+7. If data id exists in the database
+8a. If the submission still has a "new" status the user can update the email address for up to 5 times (we have a full audit log)
+8b. If the submission is "processing" the user can't update the email address
+8c. If the submission is "done" the user is show the link to their results and information about the link expiration date
+8c. If the submission is "expired" the user should be able to create a new submission
 
-## Prerequisites
+## Admin panel
 
-- **Java 17+**
-- **Maven 3.8+**
-- **PostgreSQL** running on `localhost:5432`
+- Admin panel has simple password authentication
+- Admin panel allows to browse and edit all submissions
 
-## Database Setup
+## Anti abuse
 
-```sql
-CREATE DATABASE data_collection;
-CREATE USER app_user WITH PASSWORD 'app_password';
-GRANT ALL PRIVILEGES ON DATABASE data_collection TO app_user;
--- On PostgreSQL 15+, also run:
-\c data_collection
-GRANT ALL ON SCHEMA public TO app_user;
-```
+App has simple anti abuse behaviour:
 
-Flyway will automatically create the `submissions` table on first startup.
-
-## Configuration
-
-Edit `src/main/resources/application.properties`:
-
-| Property               | Description                          | Default                |
-|------------------------|--------------------------------------|------------------------|
-| `app.signature.secret` | Secret key used for MD5 signatures   | `my-super-secret-key`  |
-| `quarkus.datasource.*` | PostgreSQL connection settings       | localhost:5432         |
-
-**⚠️ Change `app.signature.secret` in production!**
-
-## Run (Dev Mode)
-
-```bash
-./mvnw quarkus:dev
-```
-
-The app starts at **http://localhost:8080**.
+- Only 5 submissions can be created from one IP address
+- Each submission allows only 5 email adress updates
 
 ## Generate a Test Link
 
@@ -68,38 +47,30 @@ Response:
 
 Open the full link in your browser to test the flow.
 
-## API Endpoints
+## Prerequisites
 
-| Method | Path                 | Description                          |
-|--------|----------------------|--------------------------------------|
-| GET    | `/api/verify`        | Verify dataId + signature            |
-| POST   | `/api/submit`        | Submit email for a verified dataId   |
-| GET    | `/api/generate-link` | (DEV) Generate a signed link         |
+- **Java 17+**
+- **Maven 3.8+**
+- **PostgreSQL** running on `localhost:5432`
 
-## Project Structure
+## Configuration
 
+Edit `src/main/resources/application.properties`:
+
+| Property               | Description                          | Default                |
+|------------------------|--------------------------------------|------------------------|
+| `app.signature.secret` | Secret key used for MD5 signatures   | `my-super-secret-key`  |
+| `quarkus.datasource.*` | PostgreSQL connection settings       | localhost:5432         |
+
+**⚠️ Change `app.signature.secret` in production!**
+
+## Run (Dev Mode)
+
+```bash
+./mvnw quarkus:dev
 ```
-src/main/java/com/app/
-├── dto/
-│   └── EmailSubmissionRequest.java   # Request validation DTO
-├── entity/
-│   ├── Submission.java               # JPA entity (Panache)
-│   └── SubmissionUpdate.java         # Audit log entity
-├── resource/
-│   └── SubmissionResource.java       # REST endpoints
-└── service/
-    ├── RateLimitService.java         # IP-based rate limiting
-    └── SignatureService.java         # MD5 signature logic
 
-src/main/resources/
-├── application.properties            # Configuration
-├── db/migration/
-│   ├── V1__create_submissions_table.sql
-│   ├── V2__add_update_count.sql
-│   └── V3__add_audit_fields_and_updates_table.sql
-└── META-INF/resources/
-    └── index.html                    # Frontend (single-page)
-```
+The app starts at **http://localhost:8080**.
 
 ## Run with Docker
 
@@ -138,6 +109,3 @@ Override any setting via environment variables in `docker-compose.yml`:
 - Change `APP_SIGNATURE_SECRET` to a strong, random value
 - Change the database password
 - Remove or secure the `/api/generate-link` endpoint
-- Rate limiting: 5 submissions per IP per 24 hours (configurable in `RateLimitService`)
-- Email updates: max 5 per dataId (configurable in `SubmissionResource`)
-- MD5 is used here for simplicity; for higher security, consider HMAC-SHA256
