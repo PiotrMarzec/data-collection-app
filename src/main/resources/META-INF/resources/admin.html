@@ -156,6 +156,22 @@
       color: #4338ca;
     }
 
+    .status-badge { display: inline-block; padding: .2rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+    .status-NEW        { background: #dcfce7; color: #166534; }
+    .status-PROCESSING { background: #fef9c3; color: #854d0e; }
+    .status-DONE       { background: #f1f5f9; color: #475569; }
+
+    select {
+      width: 100%;
+      padding: .6rem .85rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: .95rem;
+      outline: none;
+      background: #fff;
+    }
+    select:focus { border-color: #4f46e5; }
+
     .actions { display: flex; gap: .4rem; }
 
     /* ── History row ── */
@@ -244,6 +260,7 @@
         <tr>
           <th>dataId</th>
           <th>Email</th>
+          <th>Status</th>
           <th>Updates</th>
           <th>IP Address</th>
           <th>Submitted</th>
@@ -251,7 +268,7 @@
         </tr>
       </thead>
       <tbody id="table-body">
-        <tr><td colspan="6" class="empty">Loading…</td></tr>
+        <tr><td colspan="7" class="empty">Loading…</td></tr>
       </tbody>
     </table>
 
@@ -266,9 +283,15 @@
 <!-- ═══════════════════════════════ EDIT MODAL ═══════════════════════════ -->
 <div class="modal-backdrop" id="edit-modal">
   <div class="modal">
-    <h2>Edit Email</h2>
-    <label for="edit-email-input">New Email Address</label>
+    <h2>Edit Submission</h2>
+    <label for="edit-email-input">Email Address</label>
     <input type="email" id="edit-email-input" placeholder="user@example.com" />
+    <label for="edit-status-select" style="margin-top:.9rem;">Status</label>
+    <select id="edit-status-select">
+      <option value="NEW">NEW</option>
+      <option value="PROCESSING">PROCESSING</option>
+      <option value="DONE">DONE</option>
+    </select>
     <div class="error-msg" id="edit-error"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -379,7 +402,7 @@
     openHistoryRow = null;
 
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No submissions found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No submissions found.</td></tr>';
       return;
     }
 
@@ -387,12 +410,13 @@
       <tr data-id="${row.id}">
         <td><code>${esc(row.dataId)}</code></td>
         <td>${esc(row.email)}</td>
+        <td><span class="status-badge status-${row.status}">${row.status}</span></td>
         <td><span class="badge">${row.updateCount}</span></td>
         <td>${esc(row.ipAddress || '—')}</td>
         <td>${formatDate(row.submittedAt || row.createdAt)}</td>
         <td>
           <div class="actions">
-            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${row.id}, '${esc(row.email)}', '${row.status}')">Edit</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleHistory(${row.id}, this)">History</button>
           </div>
         </td>
@@ -433,10 +457,10 @@
     historyRow.className = 'history-row';
 
     if (!history.length) {
-      historyRow.innerHTML = `<td colspan="6"><div class="history-inner" style="color:#94a3b8">No update history.</div></td>`;
+      historyRow.innerHTML = `<td colspan="7"><div class="history-inner" style="color:#94a3b8">No update history.</div></td>`;
     } else {
       historyRow.innerHTML = `
-        <td colspan="6">
+        <td colspan="7">
           <div class="history-inner">
             <table>
               <thead>
@@ -469,9 +493,10 @@
   }
 
   // ── Edit modal ─────────────────────────────────────────────────────────
-  function openEdit(id, currentEmail) {
+  function openEdit(id, currentEmail, currentStatus) {
     editingId = id;
     document.getElementById('edit-email-input').value = currentEmail;
+    document.getElementById('edit-status-select').value = currentStatus || 'NEW';
     document.getElementById('edit-error').textContent = '';
     document.getElementById('edit-modal').classList.add('open');
     setTimeout(() => document.getElementById('edit-email-input').focus(), 50);
@@ -492,9 +517,10 @@
       return;
     }
 
+    const status = document.getElementById('edit-status-select').value;
     const res = await apiFetch(`/admin/submissions/${editingId}`, {
       method: 'PUT',
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, status })
     });
     if (!res) return;
 

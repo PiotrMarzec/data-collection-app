@@ -34,6 +34,9 @@ public class Submission extends PanacheEntity {
     @Column(name = "created_at", nullable = false)
     public LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = false)
+    public String status = "NEW";
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")
     public List<SubmissionUpdate> updates = new ArrayList<>();

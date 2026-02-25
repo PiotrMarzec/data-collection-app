@@ -152,8 +152,10 @@
             margin-bottom: 16px;
         }
 
-        .icon-success { color: #16a34a; }
-        .icon-error   { color: #dc2626; }
+        .icon-success     { color: #16a34a; }
+        .icon-error       { color: #dc2626; }
+        .icon-processing  { color: #d97706; }
+        .icon-done        { color: #64748b; }
     </style>
 </head>
 <body>
@@ -198,6 +200,16 @@
         </div>
 
         <button class="btn btn-primary" id="submit-btn" onclick="submitEmail()">Submit</button>
+    </div>
+
+    <!-- Step 2b: Locked (processing / done) -->
+    <div id="step-locked" class="step">
+        <div class="icon" id="locked-icon">&#9203;</div>
+        <h1 id="locked-title">Submission locked</h1>
+        <p id="locked-message">Your submission is currently being processed. No further changes can be made.</p>
+        <div class="info-banner" style="margin-top:0;">
+            <strong>Email on file:</strong> <span id="locked-email"></span>
+        </div>
     </div>
 
     <!-- Step 3: Success -->
@@ -254,6 +266,24 @@
 
             if (!res.ok) {
                 showError(data.error || 'This link is invalid or has expired.');
+                return;
+            }
+
+            if (data.locked) {
+                const iconEl = document.getElementById('locked-icon');
+                if (data.status === 'DONE') {
+                    document.getElementById('locked-title').textContent = 'Registration complete';
+                    document.getElementById('locked-message').textContent = 'Your registration has been completed. No further changes are needed.';
+                    iconEl.textContent = '✓';
+                    iconEl.className = 'icon icon-done';
+                } else {
+                    document.getElementById('locked-title').textContent = 'Under review';
+                    document.getElementById('locked-message').textContent = 'Your submission is currently being processed. No further changes can be made at this time.';
+                    iconEl.textContent = '⏳';
+                    iconEl.className = 'icon icon-processing';
+                }
+                document.getElementById('locked-email').textContent = data.currentEmail || '';
+                showStep('step-locked');
                 return;
             }
 

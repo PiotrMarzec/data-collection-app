@@ -102,7 +102,15 @@ public class AdminResource {
                     .entity(Map.of("error", "email is required"))
                     .build();
         }
+        if (req.status() != null && !List.of("NEW", "PROCESSING", "DONE").contains(req.status())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "status must be NEW, PROCESSING, or DONE"))
+                    .build();
+        }
         submission.email = req.email().trim();
+        if (req.status() != null) {
+            submission.status = req.status();
+        }
         submission.updatedAt = LocalDateTime.now();
         submission.persist();
         return Response.ok(SubmissionDto.from(submission)).build();
@@ -114,7 +122,7 @@ public class AdminResource {
 
     record LoginRequest(String password) {}
     record LoginResponse(String token) {}
-    record EditRequest(String email) {}
+    record EditRequest(String email, String status) {}
 
     record SubmissionDto(
             Long id,
@@ -122,6 +130,7 @@ public class AdminResource {
             String email,
             int updateCount,
             String ipAddress,
+            String status,
             LocalDateTime submittedAt,
             LocalDateTime updatedAt,
             LocalDateTime createdAt) {
@@ -129,7 +138,7 @@ public class AdminResource {
         static SubmissionDto from(Submission s) {
             return new SubmissionDto(
                     s.id, s.dataId, s.email, s.updateCount,
-                    s.ipAddress, s.submittedAt, s.updatedAt, s.createdAt);
+                    s.ipAddress, s.status, s.submittedAt, s.updatedAt, s.createdAt);
         }
     }
 

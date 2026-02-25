@@ -51,6 +51,16 @@ public class SubmissionResource {
 
         Submission existing = Submission.findByDataId(dataId);
 
+        if (existing != null && !"NEW".equals(existing.status)) {
+            return Response.ok(Map.of(
+                    "valid", true,
+                    "dataId", dataId,
+                    "locked", true,
+                    "status", existing.status,
+                    "currentEmail", existing.email
+            )).build();
+        }
+
         if (existing != null && existing.updateCount >= MAX_UPDATES) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of(
@@ -115,6 +125,17 @@ public class SubmissionResource {
         Submission existing = Submission.findByDataId(request.dataId);
 
         if (existing != null) {
+            // Check status lock
+            if (!"NEW".equals(existing.status)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(Map.of(
+                                "error", "This submission is locked and cannot be modified.",
+                                "locked", true,
+                                "status", existing.status
+                        ))
+                        .build();
+            }
+
             // Check update limit
             if (existing.updateCount >= MAX_UPDATES) {
                 return Response.status(Response.Status.FORBIDDEN)
