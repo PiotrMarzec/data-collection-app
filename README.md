@@ -16,10 +16,17 @@ A Quarkus/Java web app with simple SPA frontend that allows valid incoming links
 - If the submission is "done" the user is show the link to their results and information about the link expiration date
 - If the submission is "expired" the user should be able to create a new submission
 
+<img src="docs/images/data-collection-1-welcome.png" width="200">
+<img src="docs/images/data-collection-2-enter-email.png" width="200">
+<img src="docs/images/data-collection-3-done.png" width="200">
+<img src="docs/images/data-collection-4-change-email.png" width="200">
+
 ## Admin panel
 
 - Admin panel has simple password authentication
 - Admin panel allows to browse and edit all submissions
+
+![Dashboard Screenshot](docs/images/data-collection-5-admin-panel.png)
 
 ## Anti abuse
 
@@ -33,7 +40,7 @@ App has simple anti abuse behaviour:
 Use the dev-only helper endpoint:
 
 ```bash
-curl "http://localhost:8080/api/generate-link?dataId=test123"
+curl "http://localhost:9666/api/generate-link?dataId=test123"
 ```
 
 Response:
@@ -61,6 +68,8 @@ Edit `src/main/resources/application.properties`:
 |------------------------|--------------------------------------|------------------------|
 | `app.signature.secret` | Secret key used for MD5 signatures   | `my-super-secret-key`  |
 | `quarkus.datasource.*` | PostgreSQL connection settings       | localhost:5432         |
+| `app.admin.password`   | Password for admin panel             | changeme               |
+| 
 
 **⚠️ Change `app.signature.secret` in production!**
 
@@ -70,7 +79,7 @@ Edit `src/main/resources/application.properties`:
 ./mvnw quarkus:dev
 ```
 
-The app starts at **http://localhost:8080**.
+The app starts at **http://localhost:9666**.
 
 ## Run with Docker
 
@@ -82,7 +91,7 @@ docker compose up --build
 
 This starts:
 - **PostgreSQL 16** on port `5432`
-- **The app** on port `8080`
+- **The app** on port `9666`
 
 Flyway runs automatically on startup and creates all tables.
 
