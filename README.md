@@ -16,10 +16,17 @@ A Quarkus/Java web app with simple SPA frontend that allows valid incoming links
 - If the submission is "done" the user is show the link to their results and information about the link expiration date
 - If the submission is "expired" the user should be able to create a new submission
 
+<img src="docs/images/data-collection-1-welcome.png" width="200">
+<img src="docs/images/data-collection-2-enter-email.png" width="200">
+<img src="docs/images/data-collection-3-done.png" width="200">
+<img src="docs/images/data-collection-4-change-email.png" width="200">
+
 ## Admin panel
 
 - Admin panel has simple password authentication
 - Admin panel allows to browse and edit all submissions
+
+![Dashboard Screenshot](docs/images/data-collection-5-admin-panel.png)
 
 ## Anti abuse
 
