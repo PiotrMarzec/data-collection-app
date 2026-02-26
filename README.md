@@ -40,7 +40,7 @@ App has simple anti abuse behaviour:
 Use the dev-only helper endpoint:
 
 ```bash
-curl "http://localhost:8080/api/generate-link?dataId=test123"
+curl "http://localhost:9666/api/generate-link?dataId=test123"
 ```
 
 Response:
@@ -68,6 +68,8 @@ Edit `src/main/resources/application.properties`:
 |------------------------|--------------------------------------|------------------------|
 | `app.signature.secret` | Secret key used for MD5 signatures   | `my-super-secret-key`  |
 | `quarkus.datasource.*` | PostgreSQL connection settings       | localhost:5432         |
+| `app.admin.password`   | Password for admin panel             | changeme               |
+| 
 
 **⚠️ Change `app.signature.secret` in production!**
 
@@ -77,7 +79,7 @@ Edit `src/main/resources/application.properties`:
 ./mvnw quarkus:dev
 ```
 
-The app starts at **http://localhost:8080**.
+The app starts at **http://localhost:9666**.
 
 ## Run with Docker
 
@@ -89,7 +91,7 @@ docker compose up --build
 
 This starts:
 - **PostgreSQL 16** on port `5432`
-- **The app** on port `8080`
+- **The app** on port `9666`
 
 Flyway runs automatically on startup and creates all tables.
 
