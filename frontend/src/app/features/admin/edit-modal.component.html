@@ -1,0 +1,39 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <h2>Edit Submission</h2>
+    <form [formGroup]="form">
+
+      <label for="edit-email">Email Address</label>
+      <input type="email" id="edit-email" formControlName="email" placeholder="user@example.com" />
+
+      <label for="edit-status" style="margin-top:.9rem;">Status</label>
+      <select id="edit-status" formControlName="status">
+        <option value="NEW">NEW</option>
+        <option value="PROCESSING">PROCESSING</option>
+        <option value="DONE">DONE</option>
+        <option value="EXPIRED">EXPIRED</option>
+      </select>
+
+      @if (isDone) {
+        <div style="margin-top:.9rem;">
+          <label for="edit-result-url">Result URL <span style="color:#dc2626">*</span></label>
+          <input type="text" id="edit-result-url" formControlName="resultUrl" placeholder="https://…" />
+        </div>
+      }
+
+      <div style="margin-top:.9rem;">
+        <label for="edit-exp-date">Expiration Date</label>
+        <input type="date" id="edit-exp-date" formControlName="expirationDate" />
+        <div class="field-hint">Defaults to 30 days from today when setting status to DONE.</div>
+      </div>
+
+      <div class="error-msg">{{ editError() }}</div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">Save</button>
+      </div>
+
+    </form>
+  </div>
+</div>

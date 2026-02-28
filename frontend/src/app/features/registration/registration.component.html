@@ -1,0 +1,126 @@
+<div class="card">
+  @switch (step()) {
+
+    @case ('loading') {
+      <div class="step">
+        <div class="spinner loading-spinner"></div>
+        <p>Verifying your link…</p>
+      </div>
+    }
+
+    @case ('welcome') {
+      <div class="step">
+        <h1>Welcome!</h1>
+        <p>You have been invited to complete your registration. Please provide your email address to continue.</p>
+        <button class="btn btn-primary" (click)="goToEmail()">Get Started</button>
+      </div>
+    }
+
+    @case ('welcome-update') {
+      <div class="step">
+        <h1>Update your email</h1>
+        <p>You have already registered an email address for this link. You can update it below.</p>
+        <div class="info-banner">
+          <strong>Current email:</strong> {{ currentEmail() }}
+        </div>
+        <div class="updates-remaining">{{ updatesRemainingText() }}</div>
+        <button class="btn btn-primary" (click)="goToEmail()">Update Email</button>
+      </div>
+    }
+
+    @case ('email') {
+      <div class="step">
+        <h1>{{ isUpdate() ? 'Enter your new email' : 'Enter your email' }}</h1>
+        <p>{{ isUpdate() ? 'This will replace your previously registered email address.' : "We'll use this email to keep you updated." }}</p>
+
+        @if (isUpdate()) {
+          <div class="updates-remaining">{{ updatesRemainingText() }}</div>
+        }
+
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input
+            type="email"
+            id="email"
+            [(ngModel)]="emailValue"
+            placeholder="you@example.com"
+            autocomplete="email"
+            (keydown.enter)="submitEmail()"
+          />
+          @if (emailError()) {
+            <div class="error-text">{{ emailError() }}</div>
+          }
+        </div>
+
+        <button class="btn btn-primary" [disabled]="submitting()" (click)="submitEmail()">
+          @if (submitting()) {
+            <span class="spinner"></span> Submitting…
+          } @else {
+            Submit
+          }
+        </button>
+      </div>
+    }
+
+    @case ('locked') {
+      @let locked = lockedState()!;
+      <div class="step">
+        @switch (locked.status) {
+          @case ('EXPIRED') {
+            <div class="icon icon-expired">✕</div>
+            <h1>Results expired</h1>
+            <p>The results for this submission have expired and are no longer available.</p>
+          }
+          @case ('DONE') {
+            <div class="icon icon-done">✓</div>
+            <h1>Registration complete</h1>
+            <p>Your registration has been completed. No further changes are needed.</p>
+          }
+          @default {
+            <div class="icon icon-processing">⏳</div>
+            <h1>Under review</h1>
+            <p>Your submission is currently being processed. No further changes can be made at this time.</p>
+          }
+        }
+
+        <div class="info-banner" style="margin-top:0;">
+          <strong>Email on file:</strong> {{ locked.email }}
+        </div>
+
+        @if (locked.status === 'DONE' && locked.expirationDate) {
+          @let expiry = formatExpiryInfo(locked.expirationDate);
+          <div class="expiry-info" [class.expiring-soon]="expiry.expiringSoon">
+            {{ expiry.text }}
+          </div>
+        }
+
+        @if (locked.status === 'DONE' && locked.resultUrl) {
+          <a
+            [href]="locked.resultUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-primary"
+            style="display:inline-block; margin-top:20px;"
+          >View Results</a>
+        }
+      </div>
+    }
+
+    @case ('success') {
+      <div class="step">
+        <div class="icon icon-success">&#10003;</div>
+        <h1>{{ successTitle() }}</h1>
+        <p>{{ successMessage() }}</p>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="step">
+        <div class="icon icon-error">&#10007;</div>
+        <h1>Something went wrong</h1>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    }
+
+  }
+</div>

@@ -8,7 +8,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.components.Components;
 import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
 import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -26,6 +25,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@SecurityScheme(
+        securitySchemeName = "bearerAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "API Token",
+        description = "Predefined static token set via the APP_API_TOKEN environment variable."
+)
 @OpenAPIDefinition(
         info = @Info(
                 title = "Data Collection — External API",
@@ -37,16 +43,7 @@ import java.util.Map;
                         The token is configured via the `APP_API_TOKEN` environment variable.
                         """
         ),
-        security = @SecurityRequirement(name = "bearerAuth"),
-        components = @Components(
-                securitySchemes = @SecurityScheme(
-                        securitySchemeName = "bearerAuth",
-                        type = SecuritySchemeType.HTTP,
-                        scheme = "bearer",
-                        bearerFormat = "API Token",
-                        description = "Predefined static token set via the APP_API_TOKEN environment variable."
-                )
-        )
+        security = @SecurityRequirement(name = "bearerAuth")
 )
 @Tag(name = "Submissions", description = "Operations on submission records")
 @Path("/api/external")

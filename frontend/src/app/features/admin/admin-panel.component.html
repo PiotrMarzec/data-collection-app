@@ -1,0 +1,114 @@
+<div class="topbar">
+  <h1>Admin Panel</h1>
+  <button class="btn btn-secondary btn-sm" (click)="doLogout()">Logout</button>
+</div>
+
+<div class="panel-body">
+  <div class="toolbar">
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search by email or dataId…"
+      [(ngModel)]="searchValue"
+      (input)="onSearch()"
+    />
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>dataId</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Expires</th>
+        <th>Updates</th>
+        <th>IP Address</th>
+        <th>Submitted</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (submissions().length === 0) {
+        <tr><td colspan="8" class="empty">No submissions found.</td></tr>
+      } @else {
+        @for (row of submissions(); track row.id) {
+          <tr>
+            <td><code>{{ row.dataId }}</code></td>
+            <td>{{ row.email }}</td>
+            <td>
+              <span [class]="'status-badge status-' + row.status">{{ row.status }}</span>
+            </td>
+            <td>{{ formatDate(row.expirationDate) }}</td>
+            <td><span class="badge">{{ row.updateCount }}</span></td>
+            <td>{{ row.ipAddress ?? '—' }}</td>
+            <td>{{ formatDate(row.submittedAt ?? row.createdAt) }}</td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-secondary btn-sm" (click)="openEdit(row)">Edit</button>
+                <button class="btn btn-secondary btn-sm" (click)="toggleHistory(row.id)">History</button>
+              </div>
+            </td>
+          </tr>
+          @if (openHistoryId() === row.id) {
+            <tr class="history-row">
+              <td colspan="8">
+                <div class="history-inner">
+                  @let history = historyMap().get(row.id) ?? [];
+                  @if (history.length === 0) {
+                    <span class="empty-history">No update history.</span>
+                  } @else {
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Email</th>
+                          <th>IP Address</th>
+                          <th>User Agent</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (h of history; track h.id; let i = $index) {
+                          <tr>
+                            <td>{{ i + 1 }}</td>
+                            <td>{{ h.email }}</td>
+                            <td>{{ h.ipAddress ?? '—' }}</td>
+                            <td [title]="h.userAgent ?? ''">{{ truncate(h.userAgent, 40) }}</td>
+                            <td>{{ formatDate(h.createdAt) }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      }
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    <button
+      class="btn btn-secondary btn-sm"
+      [disabled]="currentPage() === 0"
+      (click)="changePage(-1)"
+    >← Prev</button>
+    <span>{{ pageInfo() }}</span>
+    <button
+      class="btn btn-secondary btn-sm"
+      [disabled]="currentPage() >= totalPages() - 1"
+      (click)="changePage(1)"
+    >Next →</button>
+  </div>
+</div>
+
+@if (editingSubmission()) {
+  <app-edit-modal
+    [submission]="editingSubmission()!"
+    (saved)="onEditSaved()"
+    (cancelled)="onEditCancelled()"
+    (sessionExpired)="onEditSessionExpired()"
+  />
+}
