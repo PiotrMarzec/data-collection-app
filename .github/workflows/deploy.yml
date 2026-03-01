@@ -103,10 +103,14 @@ jobs:
             } > .env
             chmod 600 .env
 
-            # Pull the new image and recreate only the app container.
-            # The database container stays running — no data downtime.
+            # Pull the new app image.
             docker compose pull app
-            docker compose up -d --no-deps app
+
+            # Start all services.
+            # - First deploy: starts both db and app.
+            # - Subsequent deploys: db config is unchanged so Docker Compose
+            #   leaves it running; only the app container is recreated.
+            docker compose up -d
 
             # Reclaim disk space from dangling images.
             docker image prune -f
