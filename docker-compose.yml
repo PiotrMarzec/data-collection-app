@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ${PGDATA_PATH:-./pgdata}:/var/lib/postgresql/data
     networks:
       - backend
     healthcheck:
@@ -42,9 +42,6 @@ services:
       - "${APP_HOST:-127.0.0.1}:9666:9666"
     networks:
       - backend
-
-volumes:
-  pgdata:
 
 networks:
   backend:
