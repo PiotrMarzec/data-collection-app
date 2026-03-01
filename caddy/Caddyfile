@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────
+# Replace "yourdomain.com" with your actual domain name.
+# Caddy obtains a TLS certificate from Let's Encrypt automatically.
+#
+# Deploy path on VM: /etc/caddy/Caddyfile
+# ─────────────────────────────────────────────────────────────────
+
+yourdomain.com {
+
+    # Forward all traffic to the app container
+    reverse_proxy localhost:9666
+
+    # When the app container is down (502) or restarting (503/504),
+    # serve the static maintenance page instead of a raw error.
+    handle_errors 502 503 504 {
+        root * /var/www/maintenance
+        rewrite * /index.html
+        file_server
+    }
+
+    # Optional: tighten logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

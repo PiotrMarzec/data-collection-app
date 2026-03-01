@@ -6,22 +6,20 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: data_collection
-      POSTGRES_USER: app_user
-      POSTGRES_PASSWORD: app_password
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app_user -d data_collection"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d data_collection"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   app:
-    build: .
+    image: ${IMAGE}
     container_name: dc-app
     restart: unless-stopped
     depends_on:
@@ -30,13 +28,16 @@ services:
     environment:
       QUARKUS_HTTP_PORT: "9666"
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://db:5432/data_collection
-      QUARKUS_DATASOURCE_USERNAME: app_user
-      QUARKUS_DATASOURCE_PASSWORD: app_password
-      APP_SIGNATURE_SECRET: my-super-secret-key   # ⚠️ change in production
-      APP_ADMIN_PASSWORD: "changeme"              # ⚠️ change in production
-      APP_API_TOKEN: "changeme-api-token"         # ⚠️ change in production
+      QUARKUS_DATASOURCE_USERNAME: ${DB_USER}
+      QUARKUS_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      APP_SIGNATURE_SECRET: ${APP_SIGNATURE_SECRET}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+      APP_API_TOKEN: ${APP_API_TOKEN}
+      APP_WELCOME_TITLE: ${APP_WELCOME_TITLE:-Welcome!}
+      APP_WELCOME_DESCRIPTION: ${APP_WELCOME_DESCRIPTION:-You have been invited to complete your registration. Please provide your email address to continue.}
     ports:
-      - "9666:9666"
+      # Bind only to localhost — Caddy is the only entry point
+      - "127.0.0.1:9666:9666"
     networks:
       - backend
 
