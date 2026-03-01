@@ -202,29 +202,6 @@ public class SubmissionResource {
     }
 
     /**
-     * GET /api/generate-link?dataId=xxx
-     *
-     * Utility endpoint (DEV ONLY) to generate a valid signed link.
-     * Remove or protect this in production!
-     */
-    @GET
-    @Path("/generate-link")
-    public Response generateLink(@QueryParam("dataId") String dataId) {
-        if (dataId == null || dataId.isBlank()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "dataId is required"))
-                    .build();
-        }
-
-        String signature = signatureService.generate(dataId);
-        return Response.ok(Map.of(
-                "dataId", dataId,
-                "signature", signature,
-                "link", "/?dataId=" + dataId + "&signature=" + signature
-        )).build();
-    }
-
-    /**
      * Resolve the real client IP, respecting X-Forwarded-For
      * for deployments behind a reverse proxy / load balancer.
      */

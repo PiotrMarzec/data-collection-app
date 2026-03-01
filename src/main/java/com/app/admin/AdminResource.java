@@ -2,6 +2,7 @@ package com.app.admin;
 
 import com.app.entity.Submission;
 import com.app.entity.SubmissionUpdate;
+import com.app.service.SignatureService;
 import io.quarkus.panache.common.Sort;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -22,6 +23,9 @@ public class AdminResource {
 
     @Inject
     AdminTokenStore tokenStore;
+
+    @Inject
+    SignatureService signatureService;
 
     @ConfigProperty(name = "app.admin.password")
     String adminPassword;
@@ -48,6 +52,26 @@ public class AdminResource {
             tokenStore.invalidate(auth.substring(7));
         }
         return Response.noContent().build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Link generation
+    // -------------------------------------------------------------------------
+
+    @POST
+    @Path("/generate-link")
+    public Response generateLink(GenerateLinkRequest req) {
+        if (req == null || req.dataId() == null || req.dataId().isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "dataId is required"))
+                    .build();
+        }
+        String signature = signatureService.generate(req.dataId());
+        return Response.ok(new GenerateLinkResponse(
+                req.dataId(),
+                signature,
+                "/?dataId=" + req.dataId() + "&signature=" + signature
+        )).build();
     }
 
     // -------------------------------------------------------------------------
@@ -142,6 +166,8 @@ public class AdminResource {
 
     record LoginRequest(String password) {}
     record LoginResponse(String token) {}
+    record GenerateLinkRequest(String dataId) {}
+    record GenerateLinkResponse(String dataId, String signature, String link) {}
     record EditRequest(String email, String status, String resultUrl, String expirationDate) {}
 
     record SubmissionDto(

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   EditRequest,
+  GenerateLinkResponse,
   LoginResponse,
   PagedResponse,
   SubmissionDto,
@@ -63,5 +64,9 @@ export class AdminApiService {
     return this.http.put<SubmissionDto>(`/admin/submissions/${id}`, req, {
       headers: this.authHeaders,
     });
+  }
+
+  generateLink(dataId: string): Observable<GenerateLinkResponse> {
+    return this.http.post<GenerateLinkResponse>('/admin/generate-link', { dataId }, { headers: this.authHeaders });
   }
 }

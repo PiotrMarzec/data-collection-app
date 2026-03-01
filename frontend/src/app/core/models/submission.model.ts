@@ -59,3 +59,9 @@ export interface EditRequest {
   resultUrl?: string | null;
   expirationDate?: string | null;
 }
+
+export interface GenerateLinkResponse {
+  dataId: string;
+  signature: string;
+  link: string;
+}

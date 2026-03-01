@@ -4,6 +4,32 @@
 </div>
 
 <div class="panel-body">
+  <div class="generate-link-card">
+    <h2 class="section-title">Generate Registration Link</h2>
+    <div class="generate-link-form">
+      <input
+        class="generate-input"
+        type="text"
+        placeholder="Enter dataId…"
+        [(ngModel)]="generateDataId"
+        (keydown.enter)="doGenerateLink()"
+      />
+      <button
+        class="btn btn-primary btn-sm"
+        [disabled]="generating()"
+        (click)="doGenerateLink()"
+      >Generate</button>
+    </div>
+    @if (generateError()) {
+      <div class="error-msg">{{ generateError() }}</div>
+    }
+    @if (generatedLink()) {
+      <div class="generated-result">
+        <a class="link-value" [href]="fullGeneratedUrl()" target="_blank" rel="noopener">{{ fullGeneratedUrl() }}</a>
+      </div>
+    }
+  </div>
+
   <div class="toolbar">
     <input
       class="search-input"
@@ -41,7 +67,7 @@
             <td>{{ formatDate(row.expirationDate) }}</td>
             <td><span class="badge">{{ row.updateCount }}</span></td>
             <td>{{ row.ipAddress ?? '—' }}</td>
-            <td>{{ formatDate(row.submittedAt ?? row.createdAt) }}</td>
+            <td>{{ formatDate(row.submittedAt) }}</td>
             <td>
               <div class="actions">
                 <button class="btn btn-secondary btn-sm" (click)="openEdit(row)">Edit</button>

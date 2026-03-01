@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { AdminApiService } from '../../core/services/admin-api.service';
-import { SubmissionDto, SubmissionUpdateDto } from '../../core/models/submission.model';
+import { GenerateLinkResponse, SubmissionDto, SubmissionUpdateDto } from '../../core/models/submission.model';
 import { EditModalComponent } from './edit-modal.component';
 
 const PAGE_SIZE = 20;
@@ -39,6 +39,11 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   historyMap = signal<Map<number, SubmissionUpdateDto[]>>(new Map());
   openHistoryId = signal<number | null>(null);
   editingSubmission = signal<SubmissionDto | null>(null);
+
+  generateDataId = '';
+  generatedLink = signal<GenerateLinkResponse | null>(null);
+  generateError = signal('');
+  generating = signal(false);
 
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalRecords() / PAGE_SIZE))
@@ -149,6 +154,32 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   truncate(str: string | null, max: number): string {
     if (!str) return '—';
     return str.length > max ? str.slice(0, max) + '…' : str;
+  }
+
+  doGenerateLink(): void {
+    const dataId = this.generateDataId.trim();
+    if (!dataId) {
+      this.generateError.set('Please enter a dataId.');
+      return;
+    }
+    this.generateError.set('');
+    this.generatedLink.set(null);
+    this.generating.set(true);
+    this.adminApi.generateLink(dataId).subscribe({
+      next: result => {
+        this.generating.set(false);
+        this.generatedLink.set(result);
+      },
+      error: () => {
+        this.generating.set(false);
+        this.generateError.set('Failed to generate link. Please try again.');
+      },
+    });
+  }
+
+  fullGeneratedUrl(): string {
+    const link = this.generatedLink();
+    return link ? window.location.origin + link.link : '';
   }
 
   doLogout(): void {
