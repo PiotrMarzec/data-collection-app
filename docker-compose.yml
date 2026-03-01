@@ -19,7 +19,8 @@ services:
       retries: 10
 
   app:
-    image: ${IMAGE}
+    build: .                  # used locally when IMAGE doesn't exist in a registry
+    image: ${IMAGE}           # production: pulled from GHCR before `up`; local: built and tagged with this name
     container_name: dc-app
     restart: unless-stopped
     depends_on:
@@ -36,8 +37,9 @@ services:
       APP_WELCOME_TITLE: ${APP_WELCOME_TITLE:-Welcome!}
       APP_WELCOME_DESCRIPTION: ${APP_WELCOME_DESCRIPTION:-You have been invited to complete your registration. Please provide your email address to continue.}
     ports:
-      # Bind only to localhost — Caddy is the only entry point
-      - "127.0.0.1:9666:9666"
+      # Production: bind to localhost only (Caddy is the only entry point).
+      # Local dev:  bind to all interfaces so the app is reachable on the network.
+      - "${APP_HOST:-127.0.0.1}:9666:9666"
     networks:
       - backend
 
