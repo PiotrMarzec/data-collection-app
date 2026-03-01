@@ -70,7 +70,7 @@ public class AdminResource {
         return Response.ok(new GenerateLinkResponse(
                 req.dataId(),
                 signature,
-                "/?dataId=" + req.dataId() + "&signature=" + signature
+                "/#/?dataId=" + req.dataId() + "&signature=" + signature
         )).build();
     }
 

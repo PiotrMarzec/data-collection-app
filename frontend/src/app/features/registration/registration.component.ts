@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { INITIAL_SEARCH } from '../../app.config';
+import { ActivatedRoute } from '@angular/router';
 import { SubmissionApiService } from '../../core/services/submission-api.service';
 import { SubmitResponse, SubmissionStatus, VerifyResponse } from '../../core/models/submission.model';
 
@@ -21,7 +21,7 @@ interface LockedState {
   styleUrl: './registration.component.css',
 })
 export class RegistrationComponent implements OnInit {
-  private readonly initialSearch = inject(INITIAL_SEARCH);
+  private readonly route = inject(ActivatedRoute);
   private readonly api = inject(SubmissionApiService);
 
   step = signal<Step>('loading');
@@ -48,7 +48,7 @@ export class RegistrationComponent implements OnInit {
   private signature = '';
 
   ngOnInit(): void {
-    const params = new URLSearchParams(this.initialSearch);
+    const params = this.route.snapshot.queryParamMap;
     this.dataId = params.get('dataId') ?? '';
     this.signature = params.get('signature') ?? '';
     this.verifyLink();
