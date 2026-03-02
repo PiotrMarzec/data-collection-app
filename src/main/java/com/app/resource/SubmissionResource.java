@@ -14,6 +14,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import io.vertx.core.http.HttpServerRequest;
+import org.jboss.logging.Logger;
+import org.jboss.logging.MDC;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -23,6 +25,8 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class SubmissionResource {
+
+    private static final Logger LOG = Logger.getLogger(SubmissionResource.class);
 
     private static final int MAX_UPDATES = 5;
 
@@ -111,6 +115,11 @@ public class SubmissionResource {
 
         // Re-verify the signature
         if (!signatureService.verify(request.dataId, request.signature)) {
+            MDC.put("event", "submission.rejected.invalid_signature");
+            MDC.put("dataId", request.dataId);
+            MDC.put("ip", resolveClientIp(httpRequest));
+            LOG.warn("Submission rejected: invalid signature");
+            MDC.clear();
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of("error", "Invalid signature"))
                     .build();
@@ -121,6 +130,10 @@ public class SubmissionResource {
 
         // Check IP rate limit
         if (!rateLimitService.isAllowed(ipAddress)) {
+            MDC.put("event", "submission.rejected.rate_limited");
+            MDC.put("ip", ipAddress);
+            LOG.warn("Submission rejected: rate limit exceeded");
+            MDC.clear();
             return Response.status(Response.Status.TOO_MANY_REQUESTS)
                     .entity(Map.of(
                             "error", "Too many submissions from this IP address. Please try again later.",
@@ -134,6 +147,12 @@ public class SubmissionResource {
         if (existing != null) {
             // Check status lock
             if (!"NEW".equals(existing.status)) {
+                MDC.put("event", "submission.rejected.locked");
+                MDC.put("dataId", request.dataId);
+                MDC.put("status", existing.status);
+                MDC.put("ip", ipAddress);
+                LOG.warn("Submission rejected: locked");
+                MDC.clear();
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity(Map.of(
                                 "error", "This submission is locked and cannot be modified.",
@@ -145,6 +164,11 @@ public class SubmissionResource {
 
             // Check update limit
             if (existing.updateCount >= MAX_UPDATES) {
+                MDC.put("event", "submission.rejected.max_updates");
+                MDC.put("dataId", request.dataId);
+                MDC.put("ip", ipAddress);
+                LOG.warn("Submission rejected: max updates reached");
+                MDC.clear();
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity(Map.of(
                                 "error", "Maximum number of email updates reached. No further changes are allowed.",
@@ -170,6 +194,13 @@ public class SubmissionResource {
             existing.persist();
 
             int remaining = MAX_UPDATES - existing.updateCount;
+            MDC.put("event", "submission.updated");
+            MDC.put("dataId", request.dataId);
+            MDC.put("email", request.email);
+            MDC.put("ip", ipAddress);
+            MDC.put("updatesRemaining", remaining);
+            LOG.info("Submission updated");
+            MDC.clear();
             return Response.ok(Map.of(
                     "success", true,
                     "message", "Email updated successfully",
@@ -195,6 +226,12 @@ public class SubmissionResource {
         initial.userAgent = userAgent;
         initial.persist();
 
+        MDC.put("event", "submission.created");
+        MDC.put("dataId", request.dataId);
+        MDC.put("email", request.email);
+        MDC.put("ip", ipAddress);
+        LOG.info("Submission created");
+        MDC.clear();
         return Response.ok(Map.of(
                 "success", true,
                 "message", "Email registered successfully"

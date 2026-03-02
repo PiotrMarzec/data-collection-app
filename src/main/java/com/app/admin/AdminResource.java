@@ -11,6 +11,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import org.jboss.logging.Logger;
+import org.jboss.logging.MDC;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +23,8 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AdminResource {
+
+    private static final Logger LOG = Logger.getLogger(AdminResource.class);
 
     @Inject
     AdminTokenStore tokenStore;
@@ -38,10 +43,16 @@ public class AdminResource {
     @Path("/login")
     public Response login(LoginRequest req) {
         if (req == null || !adminPassword.equals(req.password())) {
+            MDC.put("event", "admin.login.failed");
+            LOG.warn("Admin login failed: invalid password");
+            MDC.clear();
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(Map.of("error", "Invalid password"))
                     .build();
         }
+        MDC.put("event", "admin.login");
+        LOG.info("Admin logged in");
+        MDC.clear();
         return Response.ok(new LoginResponse(tokenStore.generate())).build();
     }
 
@@ -147,6 +158,8 @@ public class AdminResource {
             newExpiration = LocalDateTime.now().plusDays(30);
         }
 
+        String oldEmail = submission.email;
+        String oldStatus = submission.status;
         submission.email = req.email().trim();
         submission.status = newStatus;
         if ("DONE".equals(newStatus)) {
@@ -157,6 +170,15 @@ public class AdminResource {
         }
         submission.updatedAt = LocalDateTime.now();
         submission.persist();
+        MDC.put("event", "admin.submission.edited");
+        MDC.put("submissionId", id);
+        MDC.put("dataId", submission.dataId);
+        MDC.put("oldStatus", oldStatus);
+        MDC.put("newStatus", newStatus);
+        MDC.put("oldEmail", oldEmail);
+        MDC.put("newEmail", submission.email);
+        LOG.info("Admin edited submission");
+        MDC.clear();
         return Response.ok(SubmissionDto.from(submission)).build();
     }
 
