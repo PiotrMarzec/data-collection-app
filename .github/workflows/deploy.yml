@@ -67,8 +67,20 @@ jobs:
     environment: production   # unlocks environment-scoped secrets
 
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
       - name: Lowercase image name
         run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Copy docker-compose.yml to VM
+        uses: appleboy/scp-action@v0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: docker-compose.yml
+          target: /opt/data-collection-app
 
       - name: Write .env and restart app
         uses: appleboy/ssh-action@v1
@@ -104,9 +116,6 @@ jobs:
               echo "APP_API_TOKEN=${APP_API_TOKEN}"
             } > .env
             chmod 600 .env
-
-            # Sync the latest docker-compose.yml from the repo.
-            git pull --ff-only
 
             # Pull the new app image.
             docker compose pull app
