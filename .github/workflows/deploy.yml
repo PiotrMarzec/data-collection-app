@@ -105,6 +105,9 @@ jobs:
             } > .env
             chmod 600 .env
 
+            # Sync the latest docker-compose.yml from the repo.
+            git pull --ff-only
+
             # Pull the new app image.
             docker compose pull app
 

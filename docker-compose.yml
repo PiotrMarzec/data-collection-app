@@ -36,13 +36,13 @@ services:
       APP_API_TOKEN: ${APP_API_TOKEN}
       APP_WELCOME_TITLE: ${APP_WELCOME_TITLE:-Welcome!}
       APP_WELCOME_DESCRIPTION: ${APP_WELCOME_DESCRIPTION:-You have been invited to complete your registration. Please provide your email address to continue.}
-    ports:
-      # Production: bind to localhost only (Caddy is the only entry point).
-      # Local dev:  bind to all interfaces so the app is reachable on the network.
-      - "${APP_HOST:-127.0.0.1}:9666:9666"
     networks:
       - backend
+      - proxy
 
 networks:
   backend:
     driver: bridge
+  proxy:
+    external: true
+    name: proxy
